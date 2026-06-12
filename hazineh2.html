@@ -1,0 +1,782 @@
+```html
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>محاسبه‌گر بهای تمام‌شده کاتد مس ۱۴۰۴</title>
+    <!-- Tailwind CSS for Beautiful Modern UI -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome for Premium Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- SheetJS for Genuine Excel Generation (.xlsx) -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;700;900&display=swap');
+        body {
+            font-family: 'Vazirmatn', sans-serif;
+            background-color: #f8fafc;
+        }
+    </style>
+</head>
+<body class="text-slate-800 antialiased">
+
+    <!-- Header & Navigation -->
+    <header class="bg-gradient-to-r from-cyan-900 to-slate-950 text-white shadow-lg sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <div class="bg-amber-500 text-slate-950 p-2.5 rounded-lg shadow-inner">
+                    <i class="fa-solid fa-cubes-stacked text-2xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg md:text-xl font-black">سامانه محاسبات مالی هیدرومتالورژی مس</h1>
+                    <p class="text-xs text-cyan-300">تحلیل بهای تمام‌شده کاتد مس به روش هیپ لیچینگ (ویژه سال ۱۴۰۴)</p>
+                </div>
+            </div>
+            
+            <button onclick="exportToRealExcel()" class="bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 text-white font-bold py-2.5 px-5 rounded-xl shadow-md transition-all duration-200 transform hover:scale-[1.02] flex items-center gap-2 text-sm">
+                <i class="fa-solid fa-file-excel text-lg"></i>
+                <span>دانلود مستقیم فایل اکسل واقعی (XLSX)</span>
+            </button>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        <!-- Dashboard Summary & Inputs -->
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
+            <!-- Global Parameters (Inputs) -->
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 lg:col-span-1">
+                <h2 class="text-md font-bold text-slate-900 border-b border-slate-100 pb-3 mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-sliders text-cyan-600"></i>
+                    <span>پارامترهای تولیدی سال ۱۴۰۴</span>
+                </h2>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 mb-1">کل کاتد تولیدی (تن)</label>
+                        <input type="number" id="g_cathode" value="3750" oninput="recalculateAll()" class="w-full bg-amber-50/50 border border-amber-200 rounded-lg py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 font-bold text-slate-800">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 mb-1">کل سنگ معدن استخراجی (تن)</label>
+                        <input type="number" id="g_ore" value="500000" oninput="recalculateAll()" class="w-full bg-slate-50 border border-slate-200 rounded-lg py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 mb-1">عیار متوسط مس خوراک (٪)</label>
+                        <input type="number" id="g_grade" value="0.8" step="0.01" oninput="recalculateAll()" class="w-full bg-slate-50 border border-slate-200 rounded-lg py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 mb-1">بازیابی متالورژیکی کل (٪)</label>
+                        <input type="number" id="g_recovery" value="75" step="0.5" oninput="recalculateAll()" class="w-full bg-slate-50 border border-slate-200 rounded-lg py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dashboard Results Cards -->
+            <div class="lg:col-span-3 grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Total Cost Card -->
+                <div class="bg-gradient-to-br from-slate-900 to-slate-800 p-6 rounded-2xl text-white shadow-sm flex flex-col justify-between">
+                    <div class="flex justify-between items-start">
+                        <span class="text-xs font-bold text-slate-400 uppercase">کل هزینه‌های عملیاتی سالانه</span>
+                        <span class="bg-slate-700/50 p-2 rounded-lg text-amber-400"><i class="fa-solid fa-wallet"></i></span>
+                    </div>
+                    <div class="my-4">
+                        <span class="text-2xl md:text-3xl font-black text-amber-400" id="total_cost_display">۰</span>
+                        <span class="text-xs text-slate-400 block mt-1">تومان در سال ۱۴۰۴</span>
+                    </div>
+                    <div class="text-xs text-slate-300">مجموع ۴ دپارتمان فعال پروژه</div>
+                </div>
+
+                <!-- Cost Per Ton Card -->
+                <div class="bg-gradient-to-br from-cyan-950 to-cyan-900 p-6 rounded-2xl text-white shadow-sm flex flex-col justify-between">
+                    <div class="flex justify-between items-start">
+                        <span class="text-xs font-bold text-cyan-300 uppercase">بهای تمام‌شده هر تن کاتد</span>
+                        <span class="bg-cyan-800/40 p-2 rounded-lg text-emerald-400"><i class="fa-solid fa-coins"></i></span>
+                    </div>
+                    <div class="my-4">
+                        <span class="text-2xl md:text-3xl font-black text-emerald-400" id="cost_per_ton_display">۰</span>
+                        <span class="text-xs text-cyan-300 block mt-1">تومان / تن کاتد مس</span>
+                    </div>
+                    <div class="text-xs text-cyan-300">مبنای سنجش حاشیه سود کارخانه</div>
+                </div>
+
+                <!-- Production Efficiency Card -->
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-between">
+                    <div class="flex justify-between items-start">
+                        <span class="text-xs font-bold text-slate-500 uppercase">بهره‌وری مس محتوی</span>
+                        <span class="bg-amber-100 p-2 rounded-lg text-amber-600"><i class="fa-solid fa-chart-line"></i></span>
+                    </div>
+                    <div class="my-2">
+                        <div class="flex justify-between text-xs mb-1">
+                            <span class="text-slate-600">مس استخراجی:</span>
+                            <span class="font-bold" id="contained_cu">۴,۰۰۰ تن</span>
+                        </div>
+                        <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                            <div class="bg-emerald-500 h-full rounded-full" style="width: 75%"></div>
+                        </div>
+                    </div>
+                    <div class="text-xs text-slate-500 pt-2 border-t border-slate-100">
+                        سهم باطله‌برداری: <span class="font-bold text-slate-700" id="stripping_ratio">۲.۴</span> به ۱
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Custom Notification Alert -->
+        <div id="custom-alert" class="hidden fixed bottom-5 left-5 bg-slate-900 text-white px-6 py-4 rounded-xl shadow-2xl z-50 flex items-center gap-3 border border-slate-800 transition-all duration-300 transform translate-y-10">
+            <i class="fa-solid fa-circle-check text-emerald-400 text-xl"></i>
+            <div>
+                <p class="font-bold text-sm" id="alert-title">موفقیت‌آمیز</p>
+                <p class="text-xs text-slate-400" id="alert-msg">عملیات با موفقیت انجام شد.</p>
+            </div>
+        </div>
+
+        <!-- Tabs Navigation -->
+        <div class="flex overflow-x-auto bg-white p-2 rounded-xl shadow-sm border border-slate-100 mb-6 gap-1">
+            <button onclick="switchTab('tab-summary')" id="btn-tab-summary" class="tab-btn px-4 py-2 text-sm font-bold rounded-lg transition-all duration-150 flex items-center gap-2 whitespace-nowrap bg-cyan-950 text-white">
+                <i class="fa-solid fa-chart-pie"></i> خلاصه و تجمیع نهایی
+            </button>
+            <button onclick="switchTab('tab-mining')" id="btn-tab-mining" class="tab-btn px-4 py-2 text-sm font-semibold text-slate-600 hover:text-slate-900 rounded-lg transition-all duration-150 flex items-center gap-2 whitespace-nowrap">
+                <i class="fa-solid fa-truck-pickup"></i> معدن‌کاری و خردایش
+            </button>
+            <button onclick="switchTab('tab-leaching')" id="btn-tab-leaching" class="tab-btn px-4 py-2 text-sm font-semibold text-slate-600 hover:text-slate-900 rounded-lg transition-all duration-150 flex items-center gap-2 whitespace-nowrap">
+                <i class="fa-solid fa-water-ladder"></i> هیپ لیچینگ
+            </button>
+            <button onclick="switchTab('tab-sxew')" id="btn-tab-sxew" class="tab-btn px-4 py-2 text-sm font-semibold text-slate-600 hover:text-slate-900 rounded-lg transition-all duration-150 flex items-center gap-2 whitespace-nowrap">
+                <i class="fa-solid fa-bolt"></i> استخراج حلالی و الکتروینینگ (SX-EW)
+            </button>
+            <button onclick="switchTab('tab-overhead')" id="btn-tab-overhead" class="tab-btn px-4 py-2 text-sm font-semibold text-slate-600 hover:text-slate-900 rounded-lg transition-all duration-150 flex items-center gap-2 whitespace-nowrap">
+                <i class="fa-solid fa-users-gear"></i> سربار و پرسنلی
+            </button>
+        </div>
+
+        <!-- Tab Content: SUMMARY -->
+        <div id="tab-summary" class="tab-content block">
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                <div class="p-6 border-b border-slate-100 flex justify-between items-center">
+                    <h3 class="text-lg font-bold text-slate-900">ساختار تجمیعی بهای تمام‌شده سال ۱۴۰۴</h3>
+                    <span class="text-xs bg-cyan-50 text-cyan-700 px-3 py-1.5 rounded-full font-bold">نمای کلی کارخانه</span>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-right border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50 text-slate-500 text-xs font-bold uppercase border-b border-slate-100">
+                                <th class="p-4">ردیف</th>
+                                <th class="p-4">واحد عملیاتی / مرکز هزینه</th>
+                                <th class="p-4 text-left">هزینه کل سالانه (تومان)</th>
+                                <th class="p-4 text-left">سهم بر تن کاتد (تومان/تن)</th>
+                                <th class="p-4 text-center">سهم درصد کل هزینه‌ها</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 text-sm">
+                            <tr>
+                                <td class="p-4 font-bold text-slate-400">۱</td>
+                                <td class="p-4 font-bold text-slate-900">معدن‌کاری، باطله‌برداری و خردایش (Mining & Crushing)</td>
+                                <td class="p-4 text-left font-mono font-bold" id="sum_mining_total">۰</td>
+                                <td class="p-4 text-left font-mono text-slate-600" id="sum_mining_per_ton">۰</td>
+                                <td class="p-4 text-center">
+                                    <div class="flex items-center justify-center gap-2">
+                                        <div class="w-24 bg-slate-100 h-2 rounded-full overflow-hidden">
+                                            <div id="bar_mining" class="bg-cyan-600 h-full rounded-full" style="width: 0%"></div>
+                                        </div>
+                                        <span class="font-bold text-xs" id="pct_mining">۰٪</span>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="p-4 font-bold text-slate-400">۲</td>
+                                <td class="p-4 font-bold text-slate-900">فرآیند هیپ لیچینگ و تدارکات پدها (Heap Leaching)</td>
+                                <td class="p-4 text-left font-mono font-bold" id="sum_leaching_total">۰</td>
+                                <td class="p-4 text-left font-mono text-slate-600" id="sum_leaching_per_ton">۰</td>
+                                <td class="p-4 text-center">
+                                    <div class="flex items-center justify-center gap-2">
+                                        <div class="w-24 bg-slate-100 h-2 rounded-full overflow-hidden">
+                                            <div id="bar_leaching" class="bg-teal-500 h-full rounded-full" style="width: 0%"></div>
+                                        </div>
+                                        <span class="font-bold text-xs" id="pct_leaching">۰٪</span>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="p-4 font-bold text-slate-400">۳</td>
+                                <td class="p-4 font-bold text-slate-900">استخراج حلالی و الکتروینینگ (SX-EW)</td>
+                                <td class="p-4 text-left font-mono font-bold" id="sum_sxew_total">۰</td>
+                                <td class="p-4 text-left font-mono text-slate-600" id="sum_sxew_per_ton">۰</td>
+                                <td class="p-4 text-center">
+                                    <div class="flex items-center justify-center gap-2">
+                                        <div class="w-24 bg-slate-100 h-2 rounded-full overflow-hidden">
+                                            <div id="bar_sxew" class="bg-amber-500 h-full rounded-full" style="width: 0%"></div>
+                                        </div>
+                                        <span class="font-bold text-xs" id="pct_sxew">۰٪</span>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="p-4 font-bold text-slate-400">۴</td>
+                                <td class="p-4 font-bold text-slate-900">سربار اداری، پرسنلی، فنی و آزمایشگاه (Overhead)</td>
+                                <td class="p-4 text-left font-mono font-bold" id="sum_overhead_total">۰</td>
+                                <td class="p-4 text-left font-mono text-slate-600" id="sum_overhead_per_ton">۰</td>
+                                <td class="p-4 text-center">
+                                    <div class="flex items-center justify-center gap-2">
+                                        <div class="w-24 bg-slate-100 h-2 rounded-full overflow-hidden">
+                                            <div id="bar_overhead" class="bg-purple-500 h-full rounded-full" style="width: 0%"></div>
+                                        </div>
+                                        <span class="font-bold text-xs" id="pct_overhead">۰٪</span>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr class="bg-emerald-50/50 font-bold text-slate-900 text-md">
+                                <td class="p-4 text-center" colspan="2">مجموع بهای تمام‌شده نهایی کارخانه</td>
+                                <td class="p-4 text-left font-mono text-emerald-700" id="sum_grand_total">۰</td>
+                                <td class="p-4 text-left font-mono text-emerald-800" id="sum_grand_per_ton">۰</td>
+                                <td class="p-4 text-center text-xs text-slate-500">۱۰۰٪ کل مخارج عملیاتی</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab Content: Mining & Crushing -->
+        <div id="tab-mining" class="tab-content hidden">
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                <div class="p-6 border-b border-slate-100 flex justify-between items-center">
+                    <div>
+                        <h3 class="text-lg font-bold text-slate-900">معدن‌کاری و خردایش (Mining & Crushing)</h3>
+                        <p class="text-xs text-slate-500 mt-1">کلیه مخارج آماده‌سازی، استخراج و رساندن مس به ابعاد بهینه پدها</p>
+                    </div>
+                    <span class="text-xs bg-amber-50 text-amber-700 px-3 py-1.5 rounded-full font-bold">دپارتمان معدن</span>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-right border-collapse" id="table-mining-data">
+                        <thead>
+                            <tr class="bg-slate-50 text-slate-500 text-xs font-bold border-b border-slate-100">
+                                <th class="p-4 w-12">ردیف</th>
+                                <th class="p-4">شرح هزینه</th>
+                                <th class="p-4 w-28">واحد</th>
+                                <th class="p-4 w-40 text-left">مقدار مصرف سالانه</th>
+                                <th class="p-4 w-44 text-left">قیمت واحد (تومان)</th>
+                                <th class="p-4 w-44 text-left">هزینه کل (تومان)</th>
+                                <th class="p-4 w-40 text-left">سهم هر تن کاتد</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 text-sm" id="tbody-mining">
+                            <!-- JS will inject rows -->
+                        </tbody>
+                        <tfoot>
+                            <tr class="bg-slate-50 font-bold text-slate-900">
+                                <td class="p-4" colspan="2">جمع کل دپارتمان معدن</td>
+                                <td colspan="3"></td>
+                                <td class="p-4 text-left font-mono text-amber-700" id="total_mining_cost">۰</td>
+                                <td class="p-4 text-left font-mono text-slate-700" id="total_mining_per_ton">۰</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab Content: Leaching -->
+        <div id="tab-leaching" class="tab-content hidden">
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                <div class="p-6 border-b border-slate-100 flex justify-between items-center">
+                    <div>
+                        <h3 class="text-lg font-bold text-slate-900">فرآیند هیپ لیچینگ (Heap Leaching)</h3>
+                        <p class="text-xs text-slate-500 mt-1">اسیدپاشی، عایق‌کاری، پمپاژ و توسعه مستمر بسترهای پد</p>
+                    </div>
+                    <span class="text-xs bg-teal-50 text-teal-700 px-3 py-1.5 rounded-full font-bold">دپارتمان لیچینگ</span>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-right border-collapse" id="table-leaching-data">
+                        <thead>
+                            <tr class="bg-slate-50 text-slate-500 text-xs font-bold border-b border-slate-100">
+                                <th class="p-4 w-12">ردیف</th>
+                                <th class="p-4">شرح هزینه</th>
+                                <th class="p-4 w-28">واحد</th>
+                                <th class="p-4 w-40 text-left">مقدار مصرف سالانه</th>
+                                <th class="p-4 w-44 text-left">قیمت واحد (تومان)</th>
+                                <th class="p-4 w-44 text-left">هزینه کل (تومان)</th>
+                                <th class="p-4 w-40 text-left">سهم هر تن کاتد</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 text-sm" id="tbody-leaching">
+                            <!-- JS will inject rows -->
+                        </tbody>
+                        <tfoot>
+                            <tr class="bg-slate-50 font-bold text-slate-900">
+                                <td class="p-4" colspan="2">جمع کل دپارتمان لیچینگ</td>
+                                <td colspan="3"></td>
+                                <td class="p-4 text-left font-mono text-teal-700" id="total_leaching_cost">۰</td>
+                                <td class="p-4 text-left font-mono text-slate-700" id="total_leaching_per_ton">۰</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab Content: SX-EW -->
+        <div id="tab-sxew" class="tab-content hidden">
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                <div class="p-6 border-b border-slate-100 flex justify-between items-center">
+                    <div>
+                        <h3 class="text-lg font-bold text-slate-900">استخراج حلالی و الکتروینینگ (SX-EW)</h3>
+                        <p class="text-xs text-slate-500 mt-1">شارژ ارگانیک، تصفیه الکترولیت، مصرف برق کلان و الکترودها</p>
+                    </div>
+                    <span class="text-xs bg-cyan-50 text-cyan-700 px-3 py-1.5 rounded-full font-bold">دپارتمان تانک‌هاوس</span>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-right border-collapse" id="table-sxew-data">
+                        <thead>
+                            <tr class="bg-slate-50 text-slate-500 text-xs font-bold border-b border-slate-100">
+                                <th class="p-4 w-12">ردیف</th>
+                                <th class="p-4">شرح هزینه</th>
+                                <th class="p-4 w-28">واحد</th>
+                                <th class="p-4 w-40 text-left">مقدار مصرف سالانه</th>
+                                <th class="p-4 w-44 text-left">قیمت واحد (تومان)</th>
+                                <th class="p-4 w-44 text-left">هزینه کل (تومان)</th>
+                                <th class="p-4 w-40 text-left">سهم هر تن کاتد</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 text-sm" id="tbody-sxew">
+                            <!-- JS will inject rows -->
+                        </tbody>
+                        <tfoot>
+                            <tr class="bg-slate-50 font-bold text-slate-900">
+                                <td class="p-4" colspan="2">جمع کل دپارتمان SX-EW</td>
+                                <td colspan="3"></td>
+                                <td class="p-4 text-left font-mono text-cyan-700" id="total_sxew_cost">۰</td>
+                                <td class="p-4 text-left font-mono text-slate-700" id="total_sxew_per_ton">۰</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab Content: Overhead -->
+        <div id="tab-overhead" class="tab-content hidden">
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                <div class="p-6 border-b border-slate-100 flex justify-between items-center">
+                    <div>
+                        <h3 class="text-lg font-bold text-slate-900">هزینه‌های سربار، پرسنلی و آزمایشگاه (Overheads)</h3>
+                        <p class="text-xs text-slate-500 mt-1">حقوق و دستمزد تخصصی، ملزومات آزمایشگاهی، بهداشت و ایمنی</p>
+                    </div>
+                    <span class="text-xs bg-purple-50 text-purple-700 px-3 py-1.5 rounded-full font-bold">سربار کارخانه</span>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-right border-collapse" id="table-overhead-data">
+                        <thead>
+                            <tr class="bg-slate-50 text-slate-500 text-xs font-bold border-b border-slate-100">
+                                <th class="p-4 w-12">ردیف</th>
+                                <th class="p-4">شرح هزینه</th>
+                                <th class="p-4 w-28">واحد</th>
+                                <th class="p-4 w-40 text-left">مقدار مصرف سالانه</th>
+                                <th class="p-4 w-44 text-left">قیمت واحد (تومان)</th>
+                                <th class="p-4 w-44 text-left">هزینه کل (تومان)</th>
+                                <th class="p-4 w-40 text-left">سهم هر تن کاتد</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 text-sm" id="tbody-overhead">
+                            <!-- JS will inject rows -->
+                        </tbody>
+                        <tfoot>
+                            <tr class="bg-slate-50 font-bold text-slate-900">
+                                <td class="p-4" colspan="2">جمع کل دپارتمان سربار</td>
+                                <td colspan="3"></td>
+                                <td class="p-4 text-left font-mono text-purple-700" id="total_overhead_cost">۰</td>
+                                <td class="p-4 text-left font-mono text-slate-700" id="total_overhead_per_ton">۰</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-slate-900 text-slate-400 py-8 border-t border-slate-800 text-center text-xs mt-12">
+        <div class="max-w-7xl mx-auto px-4">
+            <p>سامانه شبیه‌ساز مالی کارخانجات تولید مس کاتد به روش هیدرومتالورژی</p>
+            <p class="mt-2 text-slate-600">توسعه یافته توسط ابزار پیشرفته تولید فایل اکسل • سال ۱۴۰۴</p>
+        </div>
+    </footer>
+
+    <!-- Scripting for Live Recalculation & Excel Generation -->
+    <script>
+        // Data Structures for the entire application
+        const costData = {
+            mining: [
+                { id: 'm1', name: 'پیمانکار آتشباری و استخراج ماده معدنی', unit: 'تن سنگ', qty: 500000, price: 18000 },
+                { id: 'm2', name: 'پیمانکار باطله‌برداری (استریپینگ)', unit: 'تن باطله', qty: 1200000, price: 14000 },
+                { id: 'm3', name: 'سوخت ماشین‌آلات استخراج و حمل سنگ (گازوئیل)', unit: 'لیتر', qty: 450000, price: 6000 },
+                { id: 'm4', name: 'قطعات سایشی سنگ‌شکن (منتل، کانکیو و لاینرها)', unit: 'جفت / دست', qty: 8, price: 120000000 },
+                { id: 'm5', name: 'توری‌های فلزی سرند خردایش و پین و ناخن لودر', unit: 'سری', qty: 24, price: 15000000 },
+                { id: 'm6', name: 'برق مصرفی خط سنگ‌شکن، سرندها و نوارنقاله‌ها', unit: 'كيلووات ساعت', qty: 1200000, price: 1200 },
+                { id: 'm7', name: 'انواع روغن‌های هیدرولیک، موتور و گریس ماشین‌آلات', unit: 'لیتر', qty: 15000, price: 85000 }
+            ],
+            leaching: [
+                { id: 'l1', name: 'اسید سولفوریک غلیظ (مهم‌ترین اقلام مصرفی لیچینگ)', unit: 'تن', qty: 42000, price: 1100000 },
+                { id: 'l2', name: 'آب مصرفی سایت (جبران تبخیر دائم هیپ‌ها و شستشو)', unit: 'مترمکعب', qty: 180000, price: 25000 },
+                { id: 'l3', name: 'ورق ژئوممبران HDPE ضخامت ۱.۵ یا ۲ میل پدهای جدید', unit: 'مترمربع', qty: 25000, price: 140000 },
+                { id: 'l4', name: 'لایه عایق بنتونیت جی‌سی‌ال (GCL) یا خاک رس اصلاح‌شده', unit: 'مترمربع', qty: 25000, price: 95000 },
+                { id: 'l5', name: 'لوله‌های اصلی، کلکتور و لترال‌های پلی اتیلنی آبرسانی پد', unit: 'متر طولی', qty: 35000, price: 4200 },
+                { id: 'l6', name: 'نازل‌های قطره‌چکانی، بارانی (اسپرینکلر) و اتصالات پیوندی', unit: 'عدد', qty: 12000, price: 18000 },
+                { id: 'l7', name: 'برق مصرفی پمپ‌های اسیدپاشی و جریان برگشتی محلول‌ها', unit: 'كيلووات ساعت', qty: 1800000, price: 1200 },
+                { id: 'l8', name: 'هزینه پاره کردن و جابجایی توده مس پدهای قدیمی (پدهای پویا)', unit: 'تن سنگ مخروبه', qty: 400000, price: 6000 }
+            ],
+            sxew: [
+                { id: 's1', name: 'اکسترکتانت ارگانیک (LIX/MOC یا مشابه برای بازیابی)', unit: 'کیلوگرم', qty: 11250, price: 450000 },
+                { id: 's2', name: 'دیلوئنت هیدروکربنی (Kerosene پایه نفتی یا دیلوئنت معدنی)', unit: 'لیتر', qty: 90000, price: 65000 },
+                { id: 's3', name: 'برق مصرفی تانک‌هاوس (رکتیفایرهای الکتروینینگ)', unit: 'كيلووات ساعت', qty: 7875000, price: 1200 },
+                { id: 's4', name: 'سولفات کبالت (افزودنی کنترل آندهای سربی و رسوب)', unit: 'کیلوگرم', qty: 4200, price: 280000 },
+                { id: 's5', name: 'پودر گوارگام یا چسب استخوان (جهت بهبود دانه بندی کاتد)', unit: 'کیلوگرم', qty: 3200, price: 220000 },
+                { id: 's6', name: 'اسید سولفوریک تزریقی مدار برگشتی تانک‌هاوس', unit: 'تن', qty: 1500, price: 1100000 },
+                { id: 's7', name: 'کربن فعال یا آنتراسیت فیلترهای جداکننده ارگانیک', unit: 'کیلوگرم', qty: 5500, price: 110000 },
+                { id: 's8', name: 'استهلاک و هزینه‌های سالانه بازسازی آندهای آلیاژی سربی', unit: 'عدد جفت', qty: 150, price: 12000000 },
+                { id: 's9', name: 'پک کاتد بلانک‌های استیل ضدزنگ و نوارهای لبه پلیمری', unit: 'عدد کاتد', qty: 450, price: 2500000 }
+            ],
+            overhead: [
+                { id: 'o1', name: 'حقوق و دستمزد پرسنل مستقیم تولیدی، شیفتی و پدها', unit: 'نفر-ماه', qty: 480, price: 32000000 },
+                { id: 'o2', name: 'حقوق و دستمزد پرسنل فنی تعمیرگاه، HSE، نمونه گیر و اداری', unit: 'نفر-ماه', qty: 360, price: 28000000 },
+                { id: 'o3', name: 'لوازم تخصصی، معرف‌ها و فوم مصرفی آزمایشگاه عیارسنجی', unit: 'پارت مصرفی', qty: 4, price: 180000000 },
+                { id: 'o4', name: 'تجهیزات ایمنی کارگاه، لباس کارهای پلیمری، چکمه‌های ضد اسید', unit: 'دست / جفت', qty: 800, price: 250000 },
+                { id: 'o5', name: 'هزینه قطعات یدکی و لوازم الکتریکی دوره‌ای کارگاه تعمیرات', unit: 'بسته تأمینی', qty: 12, price: 140000000 },
+                { id: 'o6', name: 'تلفات و پرت هدررفت فیزیکی ارگانیک در حوضچه‌ها (Raffinate Sludge)', unit: 'کیلوگرم', qty: 2200, price: 310000 }
+            ]
+        };
+
+        // Format Currency dynamically
+        function formatCurr(num) {
+            return Math.round(num).toLocaleString('fa-IR');
+        }
+
+        // Switch Active Tab
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.add('hidden');
+                content.classList.remove('block');
+            });
+            document.getElementById(tabId).classList.remove('hidden');
+            document.getElementById(tabId).classList.add('block');
+
+            // Reset tab button states
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.className = "tab-btn px-4 py-2 text-sm font-semibold text-slate-600 hover:text-slate-900 rounded-lg transition-all duration-150 flex items-center gap-2 whitespace-nowrap";
+            });
+            const activeBtn = document.getElementById('btn-' + tabId);
+            activeBtn.className = "tab-btn px-4 py-2 text-sm font-bold rounded-lg transition-all duration-150 flex items-center gap-2 whitespace-nowrap bg-cyan-950 text-white";
+        }
+
+        // Render Tables to UI
+        function renderTables() {
+            // Render Mining Table
+            const tbodyMining = document.getElementById('tbody-mining');
+            tbodyMining.innerHTML = costData.mining.map((item, idx) => `
+                <tr class="hover:bg-slate-50 transition-colors">
+                    <td class="p-4 font-semibold text-slate-400 text-center">${idx + 1}</td>
+                    <td class="p-4 font-bold text-slate-800">${item.name}</td>
+                    <td class="p-4 text-slate-500">${item.unit}</td>
+                    <td class="p-4">
+                        <input type="number" value="${item.qty}" oninput="updateItemValue('mining', ${idx}, 'qty', this.value)" class="w-full text-left bg-slate-50 border border-slate-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-amber-500 font-mono text-xs font-bold text-slate-800">
+                    </td>
+                    <td class="p-4">
+                        <input type="number" value="${item.price}" oninput="updateItemValue('mining', ${idx}, 'price', this.value)" class="w-full text-left bg-slate-50 border border-slate-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-amber-500 font-mono text-xs font-bold text-slate-800">
+                    </td>
+                    <td class="p-4 text-left font-mono font-bold text-slate-700" id="total-m-${idx}">${formatCurr(item.qty * item.price)}</td>
+                    <td class="p-4 text-left font-mono text-slate-500" id="perton-m-${idx}">۰</td>
+                </tr>
+            `).join('');
+
+            // Render Leaching Table
+            const tbodyLeaching = document.getElementById('tbody-leaching');
+            tbodyLeaching.innerHTML = costData.leaching.map((item, idx) => `
+                <tr class="hover:bg-slate-50 transition-colors">
+                    <td class="p-4 font-semibold text-slate-400 text-center">${idx + 1}</td>
+                    <td class="p-4 font-bold text-slate-800">${item.name}</td>
+                    <td class="p-4 text-slate-500">${item.unit}</td>
+                    <td class="p-4">
+                        <input type="number" value="${item.qty}" oninput="updateItemValue('leaching', ${idx}, 'qty', this.value)" class="w-full text-left bg-slate-50 border border-slate-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-teal-500 font-mono text-xs font-bold text-slate-800">
+                    </td>
+                    <td class="p-4">
+                        <input type="number" value="${item.price}" oninput="updateItemValue('leaching', ${idx}, 'price', this.value)" class="w-full text-left bg-slate-50 border border-slate-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-teal-500 font-mono text-xs font-bold text-slate-800">
+                    </td>
+                    <td class="p-4 text-left font-mono font-bold text-slate-700" id="total-l-${idx}">${formatCurr(item.qty * item.price)}</td>
+                    <td class="p-4 text-left font-mono text-slate-500" id="perton-l-${idx}">۰</td>
+                </tr>
+            `).join('');
+
+            // Render SX-EW Table
+            const tbodySxew = document.getElementById('tbody-sxew');
+            tbodySxew.innerHTML = costData.sxew.map((item, idx) => `
+                <tr class="hover:bg-slate-50 transition-colors">
+                    <td class="p-4 font-semibold text-slate-400 text-center">${idx + 1}</td>
+                    <td class="p-4 font-bold text-slate-800">${item.name}</td>
+                    <td class="p-4 text-slate-500">${item.unit}</td>
+                    <td class="p-4">
+                        <input type="number" value="${item.qty}" oninput="updateItemValue('sxew', ${idx}, 'qty', this.value)" class="w-full text-left bg-slate-50 border border-slate-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-cyan-500 font-mono text-xs font-bold text-slate-800">
+                    </td>
+                    <td class="p-4">
+                        <input type="number" value="${item.price}" oninput="updateItemValue('sxew', ${idx}, 'price', this.value)" class="w-full text-left bg-slate-50 border border-slate-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-cyan-500 font-mono text-xs font-bold text-slate-800">
+                    </td>
+                    <td class="p-4 text-left font-mono font-bold text-slate-700" id="total-s-${idx}">${formatCurr(item.qty * item.price)}</td>
+                    <td class="p-4 text-left font-mono text-slate-500" id="perton-s-${idx}">۰</td>
+                </tr>
+            `).join('');
+
+            // Render Overhead Table
+            const tbodyOverhead = document.getElementById('tbody-overhead');
+            tbodyOverhead.innerHTML = costData.overhead.map((item, idx) => `
+                <tr class="hover:bg-slate-50 transition-colors">
+                    <td class="p-4 font-semibold text-slate-400 text-center">${idx + 1}</td>
+                    <td class="p-4 font-bold text-slate-800">${item.name}</td>
+                    <td class="p-4 text-slate-500">${item.unit}</td>
+                    <td class="p-4">
+                        <input type="number" value="${item.qty}" oninput="updateItemValue('overhead', ${idx}, 'qty', this.value)" class="w-full text-left bg-slate-50 border border-slate-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-purple-500 font-mono text-xs font-bold text-slate-800">
+                    </td>
+                    <td class="p-4">
+                        <input type="number" value="${item.price}" oninput="updateItemValue('overhead', ${idx}, 'price', this.value)" class="w-full text-left bg-slate-50 border border-slate-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-purple-500 font-mono text-xs font-bold text-slate-800">
+                    </td>
+                    <td class="p-4 text-left font-mono font-bold text-slate-700" id="total-o-${idx}">${formatCurr(item.qty * item.price)}</td>
+                    <td class="p-4 text-left font-mono text-slate-500" id="perton-o-${idx}">۰</td>
+                </tr>
+            `).join('');
+        }
+
+        // Update Values live
+        function updateItemValue(section, idx, field, val) {
+            costData[section][idx][field] = parseFloat(val) || 0;
+            
+            // Recalculate that specific row total immediately
+            const item = costData[section][idx];
+            const code = section === 'mining' ? 'm' : section === 'leaching' ? 'l' : section === 'sxew' ? 's' : 'o';
+            document.getElementById(`total-${code}-${idx}`).innerText = formatCurr(item.qty * item.price);
+            
+            recalculateAll();
+        }
+
+        // Global Recalculation engine
+        function recalculateAll() {
+            const cathodeTons = parseFloat(document.getElementById('g_cathode').value) || 1;
+            const oreTons = parseFloat(document.getElementById('g_ore').value) || 0;
+            const oreGrade = parseFloat(document.getElementById('g_grade').value) || 0;
+
+            // Contained Copper stats
+            const calculatedCu = (oreTons * (oreGrade / 100));
+            document.getElementById('contained_cu').innerText = calculatedCu.toLocaleString('fa-IR') + " تن";
+
+            // Aggregate totals
+            let sumMining = 0;
+            costData.mining.forEach((item, idx) => {
+                const total = item.qty * item.price;
+                sumMining += total;
+                document.getElementById(`perton-m-${idx}`).innerText = formatCurr(total / cathodeTons);
+            });
+            document.getElementById('total_mining_cost').innerText = formatCurr(sumMining);
+            document.getElementById('total_mining_per_ton').innerText = formatCurr(sumMining / cathodeTons);
+
+            let sumLeaching = 0;
+            costData.leaching.forEach((item, idx) => {
+                const total = item.qty * item.price;
+                sumLeaching += total;
+                document.getElementById(`perton-l-${idx}`).innerText = formatCurr(total / cathodeTons);
+            });
+            document.getElementById('total_leaching_cost').innerText = formatCurr(sumLeaching);
+            document.getElementById('total_leaching_per_ton').innerText = formatCurr(sumLeaching / cathodeTons);
+
+            let sumSxew = 0;
+            costData.sxew.forEach((item, idx) => {
+                const total = item.qty * item.price;
+                sumSxew += total;
+                document.getElementById(`perton-s-${idx}`).innerText = formatCurr(total / cathodeTons);
+            });
+            document.getElementById('total_sxew_cost').innerText = formatCurr(sumSxew);
+            document.getElementById('total_sxew_per_ton').innerText = formatCurr(sumSxew / cathodeTons);
+
+            let sumOverhead = 0;
+            costData.overhead.forEach((item, idx) => {
+                const total = item.qty * item.price;
+                sumOverhead += total;
+                document.getElementById(`perton-o-${idx}`).innerText = formatCurr(total / cathodeTons);
+            });
+            document.getElementById('total_overhead_cost').innerText = formatCurr(sumOverhead);
+            document.getElementById('total_overhead_per_ton').innerText = formatCurr(sumOverhead / cathodeTons);
+
+            // Dashboard integration
+            const grandTotal = sumMining + sumLeaching + sumSxew + sumOverhead;
+            const grandPerTon = grandTotal / cathodeTons;
+
+            document.getElementById('total_cost_display').innerText = formatCurr(grandTotal);
+            document.getElementById('cost_per_ton_display').innerText = formatCurr(grandPerTon);
+
+            // Populate Summary Sheet Tab
+            document.getElementById('sum_mining_total').innerText = formatCurr(sumMining);
+            document.getElementById('sum_mining_per_ton').innerText = formatCurr(sumMining / cathodeTons);
+            
+            document.getElementById('sum_leaching_total').innerText = formatCurr(sumLeaching);
+            document.getElementById('sum_leaching_per_ton').innerText = formatCurr(sumLeaching / cathodeTons);
+
+            document.getElementById('sum_sxew_total').innerText = formatCurr(sumSxew);
+            document.getElementById('sum_sxew_per_ton').innerText = formatCurr(sumSxew / cathodeTons);
+
+            document.getElementById('sum_overhead_total').innerText = formatCurr(sumOverhead);
+            document.getElementById('sum_overhead_per_ton').innerText = formatCurr(sumOverhead / cathodeTons);
+
+            document.getElementById('sum_grand_total').innerText = formatCurr(grandTotal);
+            document.getElementById('sum_grand_per_ton').innerText = formatCurr(grandPerTon);
+
+            // Percents and Bars
+            if (grandTotal > 0) {
+                const pMining = (sumMining / grandTotal) * 100;
+                const pLeaching = (sumLeaching / grandTotal) * 100;
+                const pSxew = (sumSxew / grandTotal) * 100;
+                const pOverhead = (sumOverhead / grandTotal) * 100;
+
+                document.getElementById('pct_mining').innerText = pMining.toFixed(1) + '٪';
+                document.getElementById('bar_mining').style.width = pMining + '%';
+
+                document.getElementById('pct_leaching').innerText = pLeaching.toFixed(1) + '٪';
+                document.getElementById('bar_leaching').style.width = pLeaching + '%';
+
+                document.getElementById('pct_sxew').innerText = pSxew.toFixed(1) + '٪';
+                document.getElementById('bar_sxew').style.width = pSxew + '%';
+
+                document.getElementById('pct_overhead').innerText = pOverhead.toFixed(1) + '٪';
+                document.getElementById('bar_overhead').style.width = pOverhead + '%';
+            }
+
+            // Stripping Ratio display
+            const waste = parseFloat(costData.mining[1].qty) || 0;
+            const ore = parseFloat(costData.mining[0].qty) || 1;
+            document.getElementById('stripping_ratio').innerText = (waste / ore).toFixed(2);
+        }
+
+        // Custom Notification Alert triggering
+        function triggerNotification(title, msg) {
+            const alertBox = document.getElementById('custom-alert');
+            document.getElementById('alert-title').innerText = title;
+            document.getElementById('alert-msg').innerText = msg;
+            
+            alertBox.classList.remove('hidden');
+            setTimeout(() => {
+                alertBox.classList.remove('translate-y-10');
+            }, 10);
+
+            setTimeout(() => {
+                alertBox.classList.add('translate-y-10');
+                setTimeout(() => {
+                    alertBox.classList.add('hidden');
+                }, 300);
+            }, 4000);
+        }
+
+        // EXPORT TO EXCEL SYSTEM USING SHEETJS
+        function exportToRealExcel() {
+            try {
+                const wb = XLSX.utils.book_new();
+                
+                // Get general inputs
+                const cathode = parseFloat(document.getElementById('g_cathode').value) || 1;
+                const ore = parseFloat(document.getElementById('g_ore').value) || 0;
+                const grade = parseFloat(document.getElementById('g_grade').value) || 0;
+                const recovery = parseFloat(document.getElementById('g_recovery').value) || 0;
+
+                // --- 1. Summary Sheet Data ---
+                const summaryData = [
+                    ["سیستم جامع محاسبات بهای تمام شده تولید کاتد مس - سال ۱۴۰۴"],
+                    [],
+                    ["بخش اول: مفروضات تولیدی و متالورژیکی"],
+                    ["عنوان پارامتر", "مقدار عددی", "واحد"],
+                    ["کل کاتد تولید شده در سال ۱۴۰۴", cathode, "تن"],
+                    ["کل سنگ معدن استخراجی", ore, "تن"],
+                    ["عیار متوسط مس خوراک ورودی", grade / 100, "درصد"],
+                    ["بازیابی متالورژیکی کارخانه", recovery / 100, "درصد"],
+                    [],
+                    ["بخش دوم: ساختار بهای تمام شده کل کارخانه"],
+                    ["ردیف", "بخش عملیاتی", "هزینه کل سالانه (تومان)", "سهم بر هر تن کاتد (تومان/تن)", "درصد سهم"],
+                    [1, "مجموع معدن‌کاری و خردایش", {t: "f", f: "='معدنکاری و خردایش'!F11"}, {t: "f", f: "='معدنکاری و خردایش'!G11"}, {t: "f", f: "=C12/$C$16"}],
+                    [2, "مجموع فرآیند هیپ لیچینگ", {t: "f", f: "='هیپ لیچینگ'!F12"}, {t: "f", f: "='هیپ لیچینگ'!G12"}, {t: "f", f: "=C13/$C$16"}],
+                    [3, "مجموع استخراج حلالی و الکتروینینگ (SX-EW)", {t: "f", f: "='استخراج حلالی و الکتروینینگ'!F13"}, {t: "f", f: "='استخراج حلالی و الکتروینینگ'!G13"}, {t: "f", f: "=C14/$C$16"}],
+                    [4, "مجموع هزینه‌های سربار و پرسنلی", {t: "f", f: "='سربار و پرسنلی'!F10"}, {t: "f", f: "='سربار و پرسنلی'!G10"}, {t: "f", f: "=C15/$C$16"}],
+                    ["-", "بهای تمام شده نهایی کاتد مس (تومان)", {t: "f", f: "=SUM(C12:C15)"}, {t: "f", f: "=SUM(D12:D15)"}, {t: "f", f: "=SUM(E12:E15)"}]
+                ];
+                
+                const ws_summary = XLSX.utils.aoa_to_sheet(summaryData);
+                // Formatting cells
+                ws_summary['C7'].z = '0.00%';
+                ws_summary['C8'].z = '0.00%';
+                ws_summary['E12'].z = '0.0%';
+                ws_summary['E13'].z = '0.0%';
+                ws_summary['E14'].z = '0.0%';
+                ws_summary['E15'].z = '0.0%';
+                ws_summary['E16'].z = '0.0%';
+
+                XLSX.utils.book_append_sheet(wb, ws_summary, "خلاصه و داشبورد");
+
+                // Helper to create and style detailed sheets
+                function createDetailSheet(sheetTitle, dataArray) {
+                    const rows = [
+                        [sheetTitle + " - سال ۱۴۰۴"],
+                        [],
+                        ["ردیف", "شرح سرفصل هزینه", "واحد اندازه‌گیری", "مقدار مصرف سالانه", "قیمت واحد (تومان)", "هزینه کل سالانه (تومان)", "سهم به ازای هر تن کاتد (تومان/تن)"]
+                    ];
+
+                    dataArray.forEach((item, idx) => {
+                        const rowNum = idx + 4; // Excel row index is 1-based, headers end at row 3
+                        rows.push([
+                            idx + 1,
+                            item.name,
+                            item.unit,
+                            item.qty,
+                            item.price,
+                            {t: "f", f: `D${rowNum}*E${rowNum}`},
+                            {t: "f", f: `F${rowNum}/'خلاصه و داشبورد'!$B$5`}
+                        ]);
+                    });
+
+                    // Add total row
+                    const lastRow = dataArray.length + 4;
+                    rows.push([
+                        "-",
+                        "جمع کل دپارتمان",
+                        "",
+                        "",
+                        "",
+                        {t: "f", f: `=SUM(F4:F${lastRow-1})`},
+                        {t: "f", f: `=SUM(G4:G${lastRow-1})`}
+                    ]);
+
+                    return XLSX.utils.aoa_to_sheet(rows);
+                }
+
+                // Append Sheets
+                XLSX.utils.book_append_sheet(wb, createDetailSheet("معدنکاری و خردایش", costData.mining), "معدنکاری و خردایش");
+                XLSX.utils.book_append_sheet(wb, createDetailSheet("هیپ لیچینگ", costData.leaching), "هیپ لیچینگ");
+                XLSX.utils.book_append_sheet(wb, createDetailSheet("استخراج حلالی و الکتروینینگ", costData.sxew), "استخراج حلالی و الکتروینینگ");
+                XLSX.utils.book_append_sheet(wb, createDetailSheet("سربار و پرسنلی", costData.overhead), "سربار و پرسنلی");
+
+                // Enable Right-to-Left on Excel sheets for standard Persian presentation
+                for (let sn in wb.Sheets) {
+                    if (!wb.Sheets[sn]['!views']) wb.Sheets[sn]['!views'] = [];
+                    wb.Sheets[sn]['!views'].push({ RTL: true });
+                }
+
+                // Write and trigger download
+                XLSX.writeFile(wb, "copper_cathode_cost_analysis_1404.xlsx");
+                triggerNotification("اکسل با موفقیت ساخته شد!", "فایل اکسل فرمول‌نویسی‌شده مستقیم دانلود شد.");
+            } catch (err) {
+                console.error(err);
+                triggerNotification("خطا در ایجاد فایل", "متأسفانه مشکلی در ساخت فایل اکسل رخ داد.");
+            }
+        }
+
+        // Initialize on Load
+        window.onload = function() {
+            renderTables();
+            recalculateAll();
+        };
+    </script>
+</body>
+</html>
+
+```
